@@ -558,7 +558,7 @@ async function renderCaja(){
       '</div><div class="elist" id="elist-'+d+'-am">';
     ents.am.forEach(function(en){
       html+='<div class="e-item"><span class="e-hora">'+(en.hora||'--:--')+'</span><span class="e-monto">'+fmt(en.monto)+'</span><span class="e-recep">'+(en.receptor||'')+'</span>'+
-        (ro?'':'<button class="btn-del-e" onclick="delEntrega('+en.id+','+d+','am')">&#x2715;</button>')+'</div>';
+        (ro?'':'<button class="btn-del-e" onclick="delEntrega('+en.id+','+d+',\\'am\\')">&#x2715;</button>')+'</div>';
     });
     html+='</div>';
     if(!ro)html+='<div class="nef" id="nef-'+d+'-am"><div class="nef-row">'+
@@ -574,7 +574,7 @@ async function renderCaja(){
       '</div><div class="elist" id="elist-'+d+'-pm">';
     ents.pm.forEach(function(en){
       html+='<div class="e-item"><span class="e-hora">'+(en.hora||'--:--')+'</span><span class="e-monto">'+fmt(en.monto)+'</span><span class="e-recep">'+(en.receptor||'')+'</span>'+
-        (ro?'':'<button class="btn-del-e" onclick="delEntrega('+en.id+','+d+','pm')">&#x2715;</button>')+'</div>';
+        (ro?'':'<button class="btn-del-e" onclick="delEntrega('+en.id+','+d+',\\'pm\\')">&#x2715;</button>')+'</div>';
     });
     html+='</div>';
     if(!ro)html+='<div class="nef" id="nef-'+d+'-pm"><div class="nef-row">'+
