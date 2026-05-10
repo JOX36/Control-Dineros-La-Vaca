@@ -351,6 +351,8 @@ async function connectSB(){
   }catch(e){st.textContent='Error: '+(e.message||e);st.style.color='var(--red)';}
 }
 function initSB(){
+  if(!localStorage.getItem("sb_url"))localStorage.setItem("sb_url","https://wizyrznotpxgvnzcilwk.supabase.co");
+  if(!localStorage.getItem("sb_key"))localStorage.setItem("sb_key","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpenlyem5vdHB4Z3ZuemNpbHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNzQxNzUsImV4cCI6MjA5Mzk1MDE3NX0.BcWA0U3soLnKdSp9oqRQ7uBpe8WrVKs0WiqFdvBptng");
   const url=localStorage.getItem('sb_url'),key=localStorage.getItem('sb_key');
   if(!url||!key)return false;
   try{sbClient=supabase.createClient(url,key);return true;}catch{return false;}
