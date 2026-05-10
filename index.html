@@ -209,7 +209,7 @@ main{padding:14px 14px 80px;max-width:700px;margin:0 auto;position:relative;z-in
 </style>
 </head>
 <body>
-<div id="setup-overlay">
+<div id="setup-overlay" class="hidden">
   <div class="setup-box">
     <div class="sb-brand"><div class="sb-cow">🐄</div><div><div class="sb-name">La Vaca Original</div><div class="sb-sub">// configuracion Supabase</div></div></div>
     <div class="sf"><label>Supabase URL</label><input id="sb-url" placeholder="https://xxxx.supabase.co"><div class="hint">Project Settings &rarr; API &rarr; Project URL</div></div>
@@ -735,6 +735,8 @@ function initApp(){
 
 (function(){
   initSB();
+  document.getElementById('setup-overlay').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
   const saved=localStorage.getItem('sesion');
   if(saved){try{sesion=JSON.parse(saved);}catch(e){}}
   if(sesion){document.getElementById('login-screen').classList.add('hidden');initApp();}
