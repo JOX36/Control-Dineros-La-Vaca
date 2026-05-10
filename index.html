@@ -350,12 +350,11 @@ async function connectSB(){
     setTimeout(()=>{document.getElementById('setup-overlay').classList.add('hidden');document.getElementById('login-screen').classList.remove('hidden');},600);
   }catch(e){st.textContent='Error: '+(e.message||e);st.style.color='var(--red)';}
 }
+// CREDENCIALES FIJAS
+const SB_URL="https://wizyrznotpxgvnzcilwk.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpenlyem5vdHB4Z3ZuemNpbHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNzQxNzUsImV4cCI6MjA5Mzk1MDE3NX0.BcWA0U3soLnKdSp9oqRQ7uBpe8WrVKs0WiqFdvBptng";
 function initSB(){
-  if(!localStorage.getItem("sb_url"))localStorage.setItem("sb_url","https://wizyrznotpxgvnzcilwk.supabase.co");
-  if(!localStorage.getItem("sb_key"))localStorage.setItem("sb_key","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpenlyem5vdHB4Z3ZuemNpbHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNzQxNzUsImV4cCI6MjA5Mzk1MDE3NX0.BcWA0U3soLnKdSp9oqRQ7uBpe8WrVKs0WiqFdvBptng");
-  const url=localStorage.getItem('sb_url'),key=localStorage.getItem('sb_key');
-  if(!url||!key)return false;
-  try{sbClient=supabase.createClient(url,key);return true;}catch{return false;}
+  try{sbClient=supabase.createClient(SB_URL,SB_KEY);return true;}catch(e){return false;}
 }
 async function doLogin(){
   const user=document.getElementById('l-user').value.trim().toLowerCase();
@@ -735,7 +734,7 @@ function initApp(){
 }
 
 (function(){
-  if(!initSB()){showSetup();return;}
+  initSB();
   const saved=localStorage.getItem('sesion');
   if(saved){try{sesion=JSON.parse(saved);}catch(e){}}
   if(sesion){document.getElementById('login-screen').classList.add('hidden');initApp();}
