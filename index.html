@@ -253,6 +253,41 @@ main{padding:14px 14px 80px;max-width:700px;margin:0 auto;}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:var(--surface2);}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* --- RECEPTORES bajo el total del día --- */
+.dia-receptores{font-size:.58rem;color:var(--text3);font-weight:700;text-align:right;line-height:1.2;max-width:90px;}
+
+/* --- MODAL EDICIÓN --- */
+.edit-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9000;}
+.edit-modal-ov.open{display:flex;}
+.edit-modal-box{background:#fff;border-radius:16px;padding:22px;width:92%;max-width:340px;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);}
+.edit-modal-title{font-size:.9rem;font-weight:900;color:var(--accent);}
+.edit-modal-inp{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:.84rem;padding:9px;width:100%;font-weight:600;}
+.edit-modal-inp:focus{outline:none;border-color:var(--accent);}
+.edit-modal-row{display:flex;gap:8px;}
+.btn-edit-cancel{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:10px;font-family:var(--font);font-weight:800;font-size:.82rem;cursor:pointer;color:var(--text2);}
+.btn-edit-confirm{flex:1;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px;font-family:var(--font);font-weight:900;font-size:.82rem;cursor:pointer;}
+.edit-error{font-size:.72rem;color:var(--red);font-weight:700;min-height:16px;}
+
+/* --- ARRASTRE / SALDO PENDIENTE --- */
+.arrastre-banner{background:linear-gradient(135deg,#fff3cd,#ffeaa7);border:1.5px solid #f9ca24;border-radius:12px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.arrastre-lbl{font-size:.75rem;font-weight:900;color:#b7791f;}
+.arrastre-amt{font-family:var(--mono);font-size:.95rem;font-weight:700;color:#b7791f;}
+
+/* --- SALDO POR PERSONA --- */
+.personas-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px;}
+.persona-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);}
+.persona-name{font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;font-weight:800;}
+.persona-saldo{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--green);}
+
+/* --- CICLO CARD DETALLE --- */
+.ciclo-card .ciclo-detalle{font-size:.72rem;color:var(--text3);margin-top:4px;font-family:var(--mono);}
+.ciclo-card .ciclo-neto{font-size:.78rem;font-weight:800;margin-top:3px;}
+
+/* --- CICLO ACTUAL EN CABECERA --- */
+.ciclo-actual-wrap{margin-bottom:10px;background:rgba(232,130,10,.07);border:1px solid rgba(232,130,10,.22);border-radius:10px;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;}
+.ciclo-actual-lbl{font-size:.65rem;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.08em;}
+.ciclo-actual-amt{font-family:var(--mono);font-size:.95rem;font-weight:700;color:var(--accent);}
 </style>
 </head>
 <body>
@@ -282,7 +317,7 @@ main{padding:14px 14px 80px;max-width:700px;margin:0 auto;}
 <button class="mnav-today" onclick="goToday()">Hoy</button></div>
 <main id="main-app">
 <div class="ro-banner" id="ro-banner">&#128065; Solo lectura. Puedes escribir notas en cada dia.</div>
-<div class="screen active" id="screen-caja"><div class="punto-hd"><div><div class="punto-hd-name" id="ph-name">Autopista</div><div class="punto-hd-sub" id="ph-sub">-</div></div><div class="mes-total" id="ph-total">-</div></div><div class="dia-list" id="dia-list"></div></div>
+<div class="screen active" id="screen-caja"><div class="punto-hd"><div><div class="punto-hd-name" id="ph-name">Autopista</div><div class="punto-hd-sub" id="ph-sub">-</div></div><div class="mes-total" id="ph-total">-</div></div><div class="ciclo-actual-wrap" id="ciclo-actual-wrap" style="display:none"><div><div class="ciclo-actual-lbl">&#128196; Ciclo actual</div></div><div class="ciclo-actual-amt" id="ciclo-actual-amt">--</div></div><div id="arrastre-wrap"></div><div class="dia-list" id="dia-list"></div></div>
 <div class="screen" id="screen-gastos">
 <div id="gastos-form-wrap"><div class="sec-hd">Registrar Gasto</div><div class="form-card">
 <div class="fg-row"><div class="fg"><span class="fg-label">Fecha</span><input type="date" class="fg-input" id="g-fecha"></div><div class="fg"><span class="fg-label">Monto</span><input type="number" class="fg-input" id="g-monto" placeholder="0.00" min="0" step="0.01"></div></div>
@@ -292,10 +327,23 @@ main{padding:14px 14px 80px;max-width:700px;margin:0 auto;}
 <div class="img-prev-wrap" id="g-prev"><img id="g-prev-img" src="" alt="" data-b64=""></div></div>
 <button class="btn-full red" onclick="addGasto()">+ Registrar Gasto</button></div></div>
 <div class="sec-hd">Gastos del Mes</div><div class="items-list" id="gastos-list"></div></div>
-<div class="screen" id="screen-resumen"><button class="btn-export" onclick="exportTXT()">&#11015; Exportar TXT</button><div class="stat-grid" id="stat-grid"></div><div class="sec-hd">Ciclos de Cuadre</div><div class="ciclos-list" id="ciclos-list"></div><div class="sec-hd">Por Punto de Venta</div><div class="res-table-wrap" id="res-table"></div><div class="sec-hd" style="margin-top:20px">Historial</div><div class="hist-list" id="hist-list"></div></div>
+<div class="screen" id="screen-resumen"><button class="btn-export" onclick="exportTXT()">&#11015; Exportar TXT</button><div class="stat-grid" id="stat-grid"></div><div class="sec-hd">Ciclos de Cuadre</div><div class="ciclos-list" id="ciclos-list"></div><div class="sec-hd">Saldo por Persona</div><div class="personas-grid" id="personas-grid"></div><div class="sec-hd">Por Punto de Venta</div><div class="res-table-wrap" id="res-table"></div><div class="sec-hd" style="margin-top:20px">Historial</div><div class="hist-list" id="hist-list"></div></div>
 <div class="screen" id="screen-usuarios"><div class="sec-hd">Nuevo Usuario</div><div class="form-card"><div class="fg-row"><div class="fg"><span class="fg-label">Nombre</span><input type="text" class="fg-input" id="u-nombre" placeholder="Nombre completo"></div><div class="fg"><span class="fg-label">Usuario</span><input type="text" class="fg-input" id="u-username" placeholder="usuario123"></div></div><div class="fg-row"><div class="fg"><span class="fg-label">Contrasena</span><input type="password" class="fg-input" id="u-pass" placeholder="contrasena"></div><div class="fg"><span class="fg-label">Rol</span><select class="fg-input" id="u-rol"><option value="invitado">Invitado</option><option value="admin">Admin</option></select></div></div><button class="btn-full teal" onclick="saveUsuario()">Guardar Usuario</button></div><div class="sec-hd">Usuarios</div><div class="items-list" id="user-list"></div></div>
 </main>
 <div class="bottom-nav" id="bottom-nav" style="display:none"><button class="bnav-btn active" id="bnav-caja" onclick="showScreen('caja')"><span class="icon">&#x1F4B5;</span>Caja</button><button class="bnav-btn" id="bnav-gastos" onclick="showScreen('gastos')"><span class="icon">&#x1F4E4;</span>Gastos</button><button class="bnav-btn" id="bnav-resumen" onclick="showScreen('resumen')"><span class="icon">&#x1F4CA;</span>Resumen</button><button class="bnav-btn" id="bnav-usuarios" onclick="showScreen('usuarios')" style="display:none"><span class="icon">&#x1F464;</span>Usuarios</button></div>
+<div class="edit-modal-ov" id="edit-modal-ov">
+<div class="edit-modal-box">
+<div class="edit-modal-title" id="edit-modal-title">&#9998; Editar Entrega</div>
+<input class="edit-modal-inp" type="time" id="edit-hora" placeholder="Hora">
+<input class="edit-modal-inp" type="number" id="edit-monto" placeholder="Monto" min="0" step="0.01">
+<input class="edit-modal-inp" type="password" id="edit-clave" placeholder="Tu contrasena para confirmar">
+<div class="edit-error" id="edit-error"></div>
+<div class="edit-modal-row">
+<button class="btn-edit-cancel" onclick="closeEditModal()">Cancelar</button>
+<button class="btn-edit-confirm" onclick="confirmarEdicion()">Guardar</button>
+</div>
+</div>
+</div>
 <div class="modal-ov" id="modal-ov" onclick="closeModal(event)"><button class="modal-close" onclick="closeModal()">&#x2715;</button><img id="modal-img" src="" alt=""></div>
 <script>
 const PUNTOS=['Autopista','Boquia','La Tebaida','Km 25','K 18','Peñon','Colseguros'];
@@ -415,8 +463,27 @@ async function renderCaja(){
   const cuadreMap={};(rc.data||[]).forEach(function(c){cuadreMap[c.fecha]=c;});
   const mesTotal=(rb.data||[]).reduce(function(s,en){return s+(en.monto||0);},0);
   document.getElementById('ph-total').textContent=mesTotal>0?fmt(mesTotal):'--';
+
+  // --- Calcular saldo ciclo actual ---
+  const cuadresOrdenados=(rc.data||[]).slice().sort(function(a,b){return a.fecha<b.fecha?-1:1;});
+  let lastCuadreFecha=null;
+  if(cuadresOrdenados.length>0)lastCuadreFecha=cuadresOrdenados[cuadresOrdenados.length-1].fecha;
+  let cicloActualTotal=0;
   const days=getDays();
-  const ro=!isAdmin();
+  for(let d=1;d<=days;d++){
+    const fecha=ds(d);
+    if(lastCuadreFecha&&fecha<=lastCuadreFecha)continue;
+    const ee=entMap[fecha]||{am:[],pm:[]};
+    cicloActualTotal+=ee.am.concat(ee.pm).reduce(function(s,en){return s+(en.monto||0);},0);
+  }
+  const cicloWrap=document.getElementById('ciclo-actual-wrap');
+  const cicloAmt=document.getElementById('ciclo-actual-amt');
+  if(cicloActualTotal>0){cicloWrap.style.display='flex';cicloAmt.textContent=fmt(cicloActualTotal);}
+  else{cicloWrap.style.display='none';}
+
+  // --- Arrastre mes anterior ---
+  await renderArrastre(punto);
+
   list.innerHTML='';
   let lastCuadreDay=0;
 
@@ -433,6 +500,9 @@ async function renderCaja(){
     const isToday=d===HOY.getDate()&&cM===HOY.getMonth()&&cY===HOY.getFullYear();
     const cuadre=cuadreMap[fecha];
 
+    // Receptores únicos del día
+    const receptoresDia=[...new Set(allEnts.map(function(en){return en.receptor||'';}).filter(Boolean))];
+
     const card=document.createElement('div');
     card.className='dia-card'+(dayTot>0||reg.notas?' has-data':'')+(isToday?' today-card':'');
     card.id='dia-'+d;
@@ -443,7 +513,10 @@ async function renderCaja(){
     h+='<div><div class="dia-num" style="'+(isToday?'color:var(--accent);':'')+'">'+d+'</div><div class="dia-wd">'+wd+'</div></div>';
     if(nEnts>0)h+='<div class="dia-badge">'+nEnts+' entrega'+(nEnts!==1?'s':'')+'</div>';
     h+='</div>';
-    h+='<div class="dia-hd-right"><div class="dia-total">'+(dayTot>0?fmt(dayTot):'--')+'</div>';
+    h+='<div class="dia-hd-right"><div style="text-align:right">';
+    h+='<div class="dia-total">'+(dayTot>0?fmt(dayTot):'--')+'</div>';
+    if(receptoresDia.length>0)h+='<div class="dia-receptores">'+receptoresDia.join(' · ')+'</div>';
+    h+='</div>';
     h+='<div class="dia-chev" id="chev-'+d+'">&#9660;</div></div></div>';
     h+='<div class="dia-body" id="diab-'+d+'">';
 
@@ -453,17 +526,19 @@ async function renderCaja(){
     if(amTot>0)h+='<span class="turno-tot">'+fmt(amTot)+'</span>';
     h+='</div><div class="elist" id="elist-'+d+'-am">';
     ents.am.forEach(function(en){
+      const esMia=sesion&&(en.receptor||'').toLowerCase()===sesion.nombre.toLowerCase();
       h+='<div class="e-item"><span class="e-hora">'+(en.hora||'--:--')+'</span>';
       h+='<span class="e-monto">'+fmt(en.monto)+'</span>';
       h+='<span class="e-recep">'+(en.receptor||'')+'</span>';
-      if(!ro)h+='<button class="btn-del-e" onclick="delEnt('+en.id+','+d+',0)">&#x2715;</button>';
+      if(esMia)h+='<button class="btn-del-e" title="Editar" onclick="abrirEditarEnt('+en.id+','+en.monto+',&quot;'+(en.hora||'')+'&quot;,0)">&#9998;</button>';
+      if(isAdmin())h+='<button class="btn-del-e" onclick="delEnt('+en.id+','+d+',0)">&#x2715;</button>';
       h+='</div>';
     });
     h+='</div>';
-    if(!ro){
+    if(isAdmin()||true){
       h+='<div class="nef" id="nef-'+d+'-am">';
       h+='<div class="nef-row"><input class="nef-inp sm" type="time" id="nef-h-'+d+'-am" value="'+nowT()+'"><input class="nef-inp" type="number" placeholder="Monto" id="nef-m-'+d+'-am" min="0" step="0.01"></div>';
-      h+='<input class="nef-inp" type="text" placeholder="Recibido por" id="nef-r-'+d+'-am">';
+      h+='<input class="nef-inp" type="text" placeholder="Recibido por" id="nef-r-'+d+'-am" value="'+(sesion?sesion.nombre:'')+'">';
       h+='<button class="btn-add-e" onclick="addEnt('+d+',0)">+ Agregar</button></div>';
       h+='<button class="btn-tog-nef" onclick="togNef('+d+',0)">+ Nueva entrega AM</button>';
     }
@@ -475,17 +550,19 @@ async function renderCaja(){
     if(pmTot>0)h+='<span class="turno-tot">'+fmt(pmTot)+'</span>';
     h+='</div><div class="elist" id="elist-'+d+'-pm">';
     ents.pm.forEach(function(en){
+      const esMia=sesion&&(en.receptor||'').toLowerCase()===sesion.nombre.toLowerCase();
       h+='<div class="e-item"><span class="e-hora">'+(en.hora||'--:--')+'</span>';
       h+='<span class="e-monto">'+fmt(en.monto)+'</span>';
       h+='<span class="e-recep">'+(en.receptor||'')+'</span>';
-      if(!ro)h+='<button class="btn-del-e" onclick="delEnt('+en.id+','+d+',1)">&#x2715;</button>';
+      if(esMia)h+='<button class="btn-del-e" title="Editar" onclick="abrirEditarEnt('+en.id+','+en.monto+',&quot;'+(en.hora||'')+'&quot;,1)">&#9998;</button>';
+      if(isAdmin())h+='<button class="btn-del-e" onclick="delEnt('+en.id+','+d+',1)">&#x2715;</button>';
       h+='</div>';
     });
     h+='</div>';
-    if(!ro){
+    if(isAdmin()||true){
       h+='<div class="nef" id="nef-'+d+'-pm">';
       h+='<div class="nef-row"><input class="nef-inp sm" type="time" id="nef-h-'+d+'-pm" value="'+nowT()+'"><input class="nef-inp" type="number" placeholder="Monto" id="nef-m-'+d+'-pm" min="0" step="0.01"></div>';
-      h+='<input class="nef-inp" type="text" placeholder="Recibido por" id="nef-r-'+d+'-pm">';
+      h+='<input class="nef-inp" type="text" placeholder="Recibido por" id="nef-r-'+d+'-pm" value="'+(sesion?sesion.nombre:'')+'">';
       h+='<button class="btn-add-e" onclick="addEnt('+d+',1)">+ Agregar</button></div>';
       h+='<button class="btn-tog-nef" onclick="togNef('+d+',1)">+ Nueva entrega PM</button>';
     }
@@ -496,8 +573,8 @@ async function renderCaja(){
     h+='<textarea class="notas-ta" id="notas-'+d+'" placeholder="Anotaciones..." oninput="schedN('+d+')">'+(reg.notas||'')+'</textarea>';
     h+='<div class="si" id="si-'+d+'"></div></div>';
 
-    // CUADRE
-    if(!ro){
+    // CUADRE (solo admin)
+    if(isAdmin()){
       h+='<div class="cuadre-form-wrap">';
       h+='<div class="cuadre-form-inner" id="cf-'+d+'">';
       h+='<div class="cuadre-inner-title">&#x1F91D; Registrar Cuadre</div>';
@@ -536,6 +613,69 @@ async function renderCaja(){
     }
     if(isToday)setTimeout(function(){togDia(d);},150);
   }
+}
+
+
+
+// ===== ARRASTRE MES ANTERIOR =====
+async function renderArrastre(punto){
+  const wrap=document.getElementById('arrastre-wrap');
+  if(!wrap)return;
+  // Buscar si hay dinero sin cuadrar del mes anterior
+  const prevM=cM===0?11:cM-1;
+  const prevY=cM===0?cY-1:cY;
+  const ps=prevY+'-'+String(prevM+1).padStart(2,'0')+'-01';
+  const pe=prevY+'-'+String(prevM+1).padStart(2,'0')+'-31';
+  const [ea,ec]=await Promise.all([
+    sb.from('caja_entregas').select('monto,fecha').eq('punto',punto).gte('fecha',ps).lte('fecha',pe),
+    sb.from('caja_cuadres').select('fecha').eq('punto',punto).gte('fecha',ps).lte('fecha',pe).order('fecha')
+  ]);
+  const cuadresPrev=ec.data||[];
+  let lastCuadreDatePrev=null;
+  if(cuadresPrev.length>0)lastCuadreDatePrev=cuadresPrev[cuadresPrev.length-1].fecha;
+  const entsPrev=ea.data||[];
+  let pendiente=0;
+  entsPrev.forEach(function(en){
+    if(!lastCuadreDatePrev||en.fecha>lastCuadreDatePrev)pendiente+=(en.monto||0);
+  });
+  if(pendiente>0){
+    wrap.innerHTML='<div class="arrastre-banner"><div class="arrastre-lbl">&#128197; Arrastre '+MESES[prevM]+' '+prevY+' (sin cuadrar)</div><div class="arrastre-amt">+'+fmt(pendiente)+'</div></div>';
+  }else{
+    wrap.innerHTML='';
+  }
+}
+
+// ===== EDITAR ENTREGA PROPIA =====
+let _editEntId=null,_editTurno=null;
+function abrirEditarEnt(id,monto,hora,t){
+  _editEntId=id;_editTurno=t;
+  document.getElementById('edit-monto').value=monto;
+  document.getElementById('edit-hora').value=hora||'';
+  document.getElementById('edit-clave').value='';
+  document.getElementById('edit-error').textContent='';
+  document.getElementById('edit-modal-ov').classList.add('open');
+}
+function closeEditModal(){
+  document.getElementById('edit-modal-ov').classList.remove('open');
+  _editEntId=null;
+}
+async function confirmarEdicion(){
+  const monto=parseFloat(document.getElementById('edit-monto').value);
+  const hora=document.getElementById('edit-hora').value;
+  const clave=document.getElementById('edit-clave').value;
+  const errEl=document.getElementById('edit-error');
+  if(!monto||monto<=0){errEl.textContent='Monto invalido.';return;}
+  if(!clave){errEl.textContent='Ingresa tu contrasena.';return;}
+  errEl.textContent='Verificando...';
+  try{
+    const hash=await sha256(clave);
+    const {data}=await sb.from('app_usuarios').select('id').eq('username',sesion.username).eq('password',hash).eq('activo',true).maybeSingle();
+    if(!data){errEl.textContent='Contrasena incorrecta.';return;}
+    syncBusy();
+    const {error}=await sb.from('caja_entregas').update({monto:monto,hora:hora}).eq('id',_editEntId);
+    if(error){syncErr();errEl.textContent='Error: '+error.message;return;}
+    syncOk();closeEditModal();renderCaja();
+  }catch(ex){errEl.textContent='Error: '+ex.message;}
 }
 
 function togDia(d){document.getElementById('diab-'+d).classList.toggle('open');document.getElementById('chev-'+d).classList.toggle('open');}
@@ -691,8 +831,8 @@ async function renderResumen(){
   const s=cY+'-'+String(cM+1).padStart(2,'0')+'-01';
   const e=cY+'-'+String(cM+1).padStart(2,'0')+'-31';
   const [ra,rb,rc]=await Promise.all([
-    sb.from('caja_entregas').select('punto,monto').gte('fecha',s).lte('fecha',e),
-    sb.from('caja_gastos').select('monto').gte('fecha',s).lte('fecha',e),
+    sb.from('caja_entregas').select('punto,monto,receptor,fecha').gte('fecha',s).lte('fecha',e),
+    sb.from('caja_gastos').select('monto,fecha').gte('fecha',s).lte('fecha',e),
     sb.from('caja_cuadres').select('*').gte('fecha',s).lte('fecha',e).order('fecha')
   ]);
   const pvT={};PUNTOS.forEach(function(p){pvT[p]=0;});
@@ -706,26 +846,54 @@ async function renderResumen(){
     '<div class="stat-card full"><div class="sc-label">Neto del Mes</div><div class="sc-val '+(neto>=0?'gold':'red')+'" style="font-size:1.7rem">'+fmt(neto)+'</div></div>'+
     PUNTOS.map(function(p,i){return '<div class="stat-card"><div class="sc-label" style="color:'+PC[i]+'">'+p+'</div><div class="sc-val orange">'+fmt(pvT[p])+'</div></div>';}).join('');
 
+  // SALDO POR PERSONA
+  const personaMap={};
+  (ra.data||[]).forEach(function(r){
+    const nom=(r.receptor||'').trim();if(!nom)return;
+    if(!personaMap[nom])personaMap[nom]=0;
+    personaMap[nom]+=r.monto||0;
+  });
+  const pgEl=document.getElementById('personas-grid');
+  const personas=Object.keys(personaMap);
+  if(personas.length){
+    pgEl.innerHTML=personas.sort().map(function(nom){
+      return '<div class="persona-card"><div class="persona-name">'+nom+'</div><div class="persona-saldo">'+fmt(personaMap[nom])+'</div></div>';
+    }).join('');
+  }else{
+    pgEl.innerHTML='<div class="empty-msg" style="grid-column:1/-1">Sin datos este mes.</div>';
+  }
+
+  // CICLOS CON DETALLE DE GASTOS
   const cuadres=rc.data||[];
   const cl=document.getElementById('ciclos-list');
+  const allEnts=ra.data||[];
+  const allGastos=rb.data||[];
   if(!cuadres.length){cl.innerHTML='<div class="empty-msg">Sin cuadres este mes.</div>';}
   else{
-    cl.innerHTML='';let prev=0;let num=1;
+    cl.innerHTML='';
+    let prevDay=0;let num=1;
+    const renderCicloCard=function(fromDay,toDay,cuadreObj,enCurso){
+      const fromF=cY+'-'+String(cM+1).padStart(2,'0')+'-'+String(fromDay).padStart(2,'0');
+      const toF=cY+'-'+String(cM+1).padStart(2,'0')+'-'+String(toDay).padStart(2,'0');
+      let cicloIng=0,cicloGasto=0;
+      allEnts.forEach(function(en){if(en.fecha>=fromF&&en.fecha<=toF)cicloIng+=(en.monto||0);});
+      allGastos.forEach(function(g){if(g.fecha>=fromF&&g.fecha<=toF)cicloGasto+=(g.monto||0);});
+      const cicloNeto=cicloIng-cicloGasto;
+      const div=document.createElement('div');
+      div.className='ciclo-card'+(enCurso?' en-curso':'');
+      div.innerHTML='<div class="ciclo-num" style="color:'+(enCurso?'var(--accent)':'var(--green)')+'">Ciclo '+num+(enCurso?' (en curso)':'')+'</div>'+
+        '<div class="ciclo-range">Del '+fromDay+' al '+toDay+' de '+MESES[cM]+'</div>'+
+        (cuadreObj?'<div class="ciclo-meta">Recibio: '+(cuadreObj.receptor||'--')+(cuadreObj.observaciones?' | '+cuadreObj.observaciones:'')+'</div>':'<div class="ciclo-meta">Pendiente de cuadre</div>')+
+        '<div class="ciclo-detalle">Ingresos: '+fmt(cicloIng)+' | Gastos: '+fmt(cicloGasto)+'</div>'+
+        '<div class="ciclo-neto" style="color:'+(cicloNeto>=0?'var(--green)':'var(--red)')+'">Neto: '+fmt(cicloNeto)+'</div>';
+      cl.appendChild(div);
+    };
     cuadres.forEach(function(c){
       const day=parseInt(c.fecha.split('-')[2]);
-      const div=document.createElement('div');div.className='ciclo-card';
-      div.innerHTML='<div class="ciclo-num">Ciclo '+num+'</div>'+
-        '<div class="ciclo-range">Del '+(prev+1)+' al '+day+' de '+MESES[cM]+'</div>'+
-        '<div class="ciclo-meta">Entregado a: '+(c.receptor||'--')+(c.observaciones?' | '+c.observaciones:'')+'</div>';
-      cl.appendChild(div);prev=day;num++;
+      renderCicloCard(prevDay+1,day,c,false);
+      prevDay=day;num++;
     });
-    if(prev<getDays()){
-      const div=document.createElement('div');div.className='ciclo-card en-curso';
-      div.innerHTML='<div class="ciclo-num" style="color:var(--accent)">Ciclo '+num+' (en curso)</div>'+
-        '<div class="ciclo-range">Del '+(prev+1)+' al '+getDays()+' de '+MESES[cM]+'</div>'+
-        '<div class="ciclo-meta">Pendiente de cuadre</div>';
-      cl.appendChild(div);
-    }
+    if(prevDay<getDays()){renderCicloCard(prevDay+1,getDays(),null,true);}
   }
 
   const rows=PUNTOS.map(function(p,i){return '<tr><td style="color:'+PC[i]+'">'+p+'</td><td class="pos">'+fmt(pvT[p])+'</td></tr>';}).join('');
