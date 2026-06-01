@@ -242,6 +242,26 @@ main{padding:14px 14px 80px;max-width:700px;margin:0 auto;}
 .mhc-body{display:none;padding:10px 14px;}
 .mhc-body.open{display:block;}
 .btn-export{background:var(--surface2);border:1.5px solid var(--border2);color:var(--accent);border-radius:9px;padding:10px 14px;font-weight:900;cursor:pointer;margin-bottom:14px;width:100%;font-family:var(--font);font-size:.8rem;}
+
+/* --- CICLOS DE GASTOS --- */
+.gciclo-wrap{margin-bottom:14px;}
+.gciclo-banner{background:linear-gradient(135deg,#fde8e8,#f8d0d0);border:1.5px solid #e8a8a8;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.gciclo-banner.en-curso{background:linear-gradient(135deg,#fff3cd,#ffeaa7);border-color:#f9ca24;}
+.gciclo-left{padding-left:4px;}
+.gciclo-title{font-size:.78rem;font-weight:900;color:#a01a1a;}
+.gciclo-title.en-curso{color:#b7791f;}
+.gciclo-range{font-size:.7rem;color:#c04040;margin-top:2px;font-weight:700;}
+.gciclo-range.en-curso{color:#b7791f;}
+.gciclo-meta{font-size:.68rem;color:#c06060;margin-top:2px;}
+.gciclo-amount{font-family:var(--mono);font-size:.95rem;font-weight:700;color:#a01a1a;text-align:right;}
+.gciclo-amount.en-curso{color:#b7791f;}
+.gciclo-amount-lbl{font-size:.6rem;color:#c06060;text-align:right;}
+.btn-corte-gastos{width:100%;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;border-radius:10px;padding:11px;font-family:var(--font);font-weight:900;font-size:.82rem;cursor:pointer;margin-bottom:14px;box-shadow:0 3px 10px rgba(231,76,60,.3);}
+.btn-corte-gastos:hover{opacity:.88;}
+.corte-form{background:#fff3f3;border:1.5px dashed #e8a8a8;border-radius:10px;padding:10px;display:none;flex-direction:column;gap:7px;margin-bottom:10px;}
+.corte-form.open{display:flex;}
+.btn-del-gcorte{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.8rem;padding:4px;}
+.btn-del-gcorte:hover{color:var(--red);}
 .empty-msg{font-size:.8rem;color:var(--text3);padding:10px 0;font-weight:600;}
 .loader{display:flex;justify-content:center;padding:30px;}
 .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .65s linear infinite;}
@@ -326,7 +346,9 @@ main{padding:14px 14px 80px;max-width:700px;margin:0 auto;}
 <input type="file" id="g-img" accept="image/*" style="display:none" onchange="selImg(this)"><input type="file" id="g-cam" accept="image/*" capture="environment" style="display:none" onchange="selImg(this)">
 <div class="img-prev-wrap" id="g-prev"><img id="g-prev-img" src="" alt="" data-b64=""></div></div>
 <button class="btn-full red" onclick="addGasto()">+ Registrar Gasto</button></div></div>
-<div class="sec-hd">Gastos del Mes</div><div class="items-list" id="gastos-list"></div></div>
+<div id="corte-gastos-wrap"></div>
+<div class="sec-hd">Gastos del Mes</div>
+<div id="gastos-ciclos-list"></div></div>
 <div class="screen" id="screen-resumen"><button class="btn-export" onclick="exportTXT()">&#11015; Exportar TXT</button><div class="stat-grid" id="stat-grid"></div><div class="sec-hd">Ciclos de Cuadre</div><div class="ciclos-list" id="ciclos-list"></div><div class="sec-hd">Saldo por Persona</div><div class="personas-grid" id="personas-grid"></div><div class="sec-hd">Por Punto de Venta</div><div class="res-table-wrap" id="res-table"></div><div class="sec-hd" style="margin-top:20px">Historial</div><div class="hist-list" id="hist-list"></div></div>
 <div class="screen" id="screen-usuarios"><div class="sec-hd">Nuevo Usuario</div><div class="form-card"><div class="fg-row"><div class="fg"><span class="fg-label">Nombre</span><input type="text" class="fg-input" id="u-nombre" placeholder="Nombre completo"></div><div class="fg"><span class="fg-label">Usuario</span><input type="text" class="fg-input" id="u-username" placeholder="usuario123"></div></div><div class="fg-row"><div class="fg"><span class="fg-label">Contrasena</span><input type="password" class="fg-input" id="u-pass" placeholder="contrasena"></div><div class="fg"><span class="fg-label">Rol</span><select class="fg-input" id="u-rol"><option value="invitado">Invitado</option><option value="admin">Admin</option></select></div></div><button class="btn-full teal" onclick="saveUsuario()">Guardar Usuario</button></div><div class="sec-hd">Usuarios</div><div class="items-list" id="user-list"></div></div>
 </main>
@@ -774,22 +796,114 @@ async function deleteGasto(id){
 }
 async function renderGastos(){
   document.getElementById('gastos-form-wrap').style.display=isAdmin()?'block':'none';
-  const list=document.getElementById('gastos-list');
-  list.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  const corteWrap=document.getElementById('corte-gastos-wrap');
+  const ciclosList=document.getElementById('gastos-ciclos-list');
+  ciclosList.innerHTML='<div class="loader"><div class="spinner"></div></div>';
   const s=cY+'-'+String(cM+1).padStart(2,'0')+'-01';
   const e=cY+'-'+String(cM+1).padStart(2,'0')+'-31';
-  const {data}=await sb.from('caja_gastos').select('*').gte('fecha',s).lte('fecha',e).order('fecha');
-  if(!data||!data.length){list.innerHTML='<div class="empty-msg">Sin gastos este mes.</div>';return;}
-  list.innerHTML='';
-  data.forEach(function(g){
-    const div=document.createElement('div');div.className='item-card';
-    div.innerHTML=(g.img_base64?'<img class="ic-thumb" src="'+g.img_base64+'" onclick="openModal(this.src)" alt="">'
-      :'<div class="ic-icon">&#x1F9FE;</div>')+
-      '<div class="ic-info"><div class="ic-title">'+g.descripcion+'</div><div class="ic-meta">'+g.fecha+'</div></div>'+
-      '<div class="ic-amt">-'+fmt(g.monto)+'</div>'+
-      (isAdmin()?'<button class="btn-del" onclick="deleteGasto('+g.id+')">&#x2715;</button>':'');
-    list.appendChild(div);
+  const [rg,rc]=await Promise.all([
+    sb.from('caja_gastos').select('*').gte('fecha',s).lte('fecha',e).order('fecha'),
+    sb.from('caja_gastos_cuadres').select('*').gte('fecha',s).lte('fecha',e).order('fecha')
+  ]);
+  const gastos=rg.data||[];
+  const cortes=rc.data||[];
+
+  // Botón corte de gastos (solo admin)
+  if(isAdmin()){
+    corteWrap.innerHTML=
+      '<div class="corte-form" id="corte-g-form">'+
+      '<div style="font-size:.74rem;color:#a01a1a;font-weight:900;">&#x2702;&#xFE0F; Registrar Corte de Gastos</div>'+
+      '<input class="nef-inp" type="text" placeholder="Recibido / responsable (opcional)" id="cg-receptor">'+
+      '<input class="nef-inp" type="text" placeholder="Observaciones (opcional)" id="cg-obs">'+
+      '<button class="btn-hacer-cuadre" style="background:var(--red)" onclick="hacerCorteGastos()">&#x2705; Confirmar Corte</button>'+
+      '</div>'+
+      '<button class="btn-corte-gastos" onclick="togCorteForm()">&#x2702;&#xFE0F; Registrar Corte de Gastos</button>';
+  } else {
+    corteWrap.innerHTML='';
+  }
+
+  ciclosList.innerHTML='';
+
+  if(!gastos.length && !cortes.length){
+    ciclosList.innerHTML='<div class="empty-msg">Sin gastos este mes.</div>';return;
+  }
+
+  // Construir ciclos de gastos
+  let prevFecha=s;let numCiclo=1;
+  const renderCicloGastos=function(desde,hasta,corteObj,enCurso){
+    const gastosDelCiclo=gastos.filter(function(g){return g.fecha>=desde&&g.fecha<=hasta;});
+    const totalCiclo=gastosDelCiclo.reduce(function(sum,g){return sum+(g.monto||0);},0);
+    const wrap=document.createElement('div');
+    wrap.className='gciclo-wrap';
+
+    const banner=document.createElement('div');
+    banner.className='gciclo-banner'+(enCurso?' en-curso':'');
+    banner.innerHTML=
+      '<div class="gciclo-left">'+
+      '<div class="gciclo-title'+(enCurso?' en-curso':'')+'">'+(enCurso?'&#128203; Ciclo en curso':'&#x2702;&#xFE0F; Corte #'+numCiclo)+'</div>'+
+      '<div class="gciclo-range'+(enCurso?' en-curso':'')+'">'+desde+' &rarr; '+hasta+'</div>'+
+      (corteObj&&corteObj.receptor?'<div class="gciclo-meta">Resp: '+corteObj.receptor+(corteObj.observaciones?' | '+corteObj.observaciones:'')+'</div>':'')+
+      '</div>'+
+      '<div style="text-align:right">'+
+      '<div class="gciclo-amount-lbl">Total gastos</div>'+
+      '<div class="gciclo-amount'+(enCurso?' en-curso':'')+'">-'+fmt(totalCiclo)+'</div>'+
+      (isAdmin()&&corteObj?'<button class="btn-del-gcorte" onclick="delCorteGastos('+corteObj.id+')">&#x1F5D1;</button>':'')+
+      '</div>';
+    wrap.appendChild(banner);
+
+    const itemsDiv=document.createElement('div');
+    itemsDiv.className='items-list';
+    if(gastosDelCiclo.length){
+      gastosDelCiclo.forEach(function(g){
+        const div=document.createElement('div');div.className='item-card';
+        div.innerHTML=(g.img_base64?'<img class="ic-thumb" src="'+g.img_base64+'" onclick="openModal(this.src)" alt="">'
+          :'<div class="ic-icon">&#x1F9FE;</div>')+
+          '<div class="ic-info"><div class="ic-title">'+g.descripcion+'</div><div class="ic-meta">'+g.fecha+'</div></div>'+
+          '<div class="ic-amt">-'+fmt(g.monto)+'</div>'+
+          (isAdmin()?'<button class="btn-del" onclick="deleteGasto('+g.id+')">&#x2715;</button>':'');
+        itemsDiv.appendChild(div);
+      });
+    } else {
+      itemsDiv.innerHTML='<div class="empty-msg" style="padding:6px 0">Sin gastos en este ciclo.</div>';
+    }
+    wrap.appendChild(itemsDiv);
+    ciclosList.appendChild(wrap);
+  };
+
+  cortes.forEach(function(c){
+    renderCicloGastos(prevFecha,c.fecha,c,false);
+    prevFecha=c.fecha;numCiclo++;
+    // Avanzar un día para el siguiente ciclo
+    const d=new Date(c.fecha);d.setDate(d.getDate()+1);
+    prevFecha=d.toISOString().slice(0,10);
   });
+  // Ciclo actual (sin cerrar)
+  renderCicloGastos(prevFecha,e,null,true);
+}
+
+function togCorteForm(){
+  var f=document.getElementById('corte-g-form');
+  if(f)f.classList.toggle('open');
+}
+async function hacerCorteGastos(){
+  const receptor=(document.getElementById('cg-receptor').value||'').trim();
+  const obs=(document.getElementById('cg-obs').value||'').trim();
+  const today=new Date();
+  const fecha=cY+'-'+String(cM+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  if(!confirm('Confirmar corte de gastos al dia '+fecha+'?'))return;
+  syncBusy();
+  const {error}=await sb.from('caja_gastos_cuadres').insert({id:Date.now(),fecha:fecha,receptor:receptor||null,observaciones:obs||null});
+  if(error){syncErr();alert('Error: '+error.message);return;}
+  syncOk();
+  document.getElementById('corte-g-form').classList.remove('open');
+  document.getElementById('cg-receptor').value='';
+  document.getElementById('cg-obs').value='';
+  renderGastos();
+}
+
+async function delCorteGastos(id){
+  if(!confirm('Eliminar este corte de gastos?'))return;
+  syncBusy();await sb.from('caja_gastos_cuadres').delete().eq('id',id);syncOk();renderGastos();
 }
 
 async function saveUsuario(){
