@@ -346,8 +346,8 @@ main{padding:14px 14px 80px;max-width:700px;margin:0 auto;}
 <input type="file" id="g-img" accept="image/*" style="display:none" onchange="selImg(this)"><input type="file" id="g-cam" accept="image/*" capture="environment" style="display:none" onchange="selImg(this)">
 <div class="img-prev-wrap" id="g-prev"><img id="g-prev-img" src="" alt="" data-b64=""></div></div>
 <button class="btn-full red" onclick="addGasto()">+ Registrar Gasto</button></div></div>
-<div id="corte-gastos-wrap"></div>
-<div class="sec-hd">Gastos del Mes</div>
+<div class="mes-nav-gastos" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><button onclick="changeGastosMes(-1)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:1rem;">&#9664;</button><span id="gastos-mes-label" style="font-weight:900;color:var(--text);font-size:.85rem;"></span><button onclick="changeGastosMes(1)" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:1rem;">&#9654;</button></div><div id="corte-gastos-wrap"></div>
+<div class="sec-hd">Gastos</div>
 <div id="gastos-ciclos-list"></div></div>
 <div class="screen" id="screen-resumen"><button class="btn-export" onclick="exportTXT()">&#11015; Exportar TXT</button><div class="stat-grid" id="stat-grid"></div><div class="sec-hd">Ciclos de Cuadre</div><div class="ciclos-list" id="ciclos-list"></div><div class="sec-hd">Saldo por Persona</div><div class="personas-grid" id="personas-grid"></div><div class="sec-hd">Por Punto de Venta</div><div class="res-table-wrap" id="res-table"></div><div class="sec-hd" style="margin-top:20px">Historial</div><div class="hist-list" id="hist-list"></div></div>
 <div class="screen" id="screen-usuarios"><div class="sec-hd">Nuevo Usuario</div><div class="form-card"><div class="fg-row"><div class="fg"><span class="fg-label">Nombre</span><input type="text" class="fg-input" id="u-nombre" placeholder="Nombre completo"></div><div class="fg"><span class="fg-label">Usuario</span><input type="text" class="fg-input" id="u-username" placeholder="usuario123"></div></div><div class="fg-row"><div class="fg"><span class="fg-label">Contrasena</span><input type="password" class="fg-input" id="u-pass" placeholder="contrasena"></div><div class="fg"><span class="fg-label">Rol</span><select class="fg-input" id="u-rol"><option value="invitado">Invitado</option><option value="admin">Admin</option></select></div></div><button class="btn-full teal" onclick="saveUsuario()">Guardar Usuario</button></div><div class="sec-hd">Usuarios</div><div class="items-list" id="user-list"></div></div>
@@ -374,7 +374,7 @@ const DIAS=['Dom','Lun','Mar','Mie','Jue','Vie','Sab'];
 const PC=['#e8820a','#2980b9','#27ae60','#c0392b','#8e44ad','#d35400','#f39c12'];
 const SB_URL='https://wizyrznotpxgvnzcilwk.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpenlyem5vdHB4Z3ZuemNpbHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNzQxNzUsImV4cCI6MjA5Mzk1MDE3NX0.BcWA0U3soLnKdSp9oqRQ7uBpe8WrVKs0WiqFdvBptng';
-let sb=null,sesion=null,cY,cM,cP=0;
+let sb=null,sesion=null,cY,cM,cP=0,gY,gM;
 const HOY=new Date();
 
 async function sha256(msg){
@@ -456,7 +456,7 @@ function showScreen(name){
   document.querySelectorAll('.bnav-btn').forEach(function(b){b.classList.remove('active');});
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('bnav-'+name).classList.add('active');
-  if(name==='gastos')renderGastos();
+  if(name==='gastos'){gY=cY;gM=cM;renderGastos();}
   else if(name==='resumen')renderResumen();
   else if(name==='usuarios')renderUsuarios();
   else renderCaja();
@@ -473,7 +473,7 @@ async function renderCaja(){
   const punto=PUNTOS[cP];
   const [ra,rb,rc]=await Promise.all([
     sb.from('caja_registros').select('*').eq('punto',punto).gte('fecha',s).lte('fecha',e),
-    sb.from('caja_entregas').select('*').eq('punto',punto).gte('fecha',s).lte('fecha',e).order('created_at'),
+    sb.from('caja_entregas').select('*').eq('punto',punto).gte('fecha',s).lte('fecha',e).order('id'),
     sb.from('caja_cuadres').select('*').eq('punto',punto).gte('fecha',s).lte('fecha',e).order('fecha')
   ]);
   const regMap={};(ra.data||[]).forEach(function(r){regMap[r.fecha]=r;});
@@ -794,15 +794,30 @@ async function deleteGasto(id){
   if(!confirm('Eliminar?'))return;
   syncBusy();await sb.from('caja_gastos').delete().eq('id',id);syncOk();renderGastos();
 }
+function initGastosMes(){
+  if(gY===undefined){gY=cY;gM=cM;}
+}
+function changeGastosMes(d){
+  gM+=d;
+  if(gM>11){gM=0;gY++;}
+  if(gM<0){gM=11;gY--;}
+  renderGastos();
+}
 async function renderGastos(){
+  initGastosMes();
   document.getElementById('gastos-form-wrap').style.display=isAdmin()?'block':'none';
   const corteWrap=document.getElementById('corte-gastos-wrap');
   const ciclosList=document.getElementById('gastos-ciclos-list');
   ciclosList.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  // Actualizar etiqueta del mes
+  const labelEl=document.getElementById('gastos-mes-label');
+  if(labelEl)labelEl.textContent=MESES[gM]+' '+gY;
+  // Usar gY/gM para el mes que se está viendo
+  const cY_g=gY, cM_g=gM;
 
   // Calcular arrastre del mes anterior (gastos sin cortar)
-  const prevM=cM===0?11:cM-1;
-  const prevY=cM===0?cY-1:cY;
+  const prevM=cM_g===0?11:cM_g-1;
+  const prevY=cM_g===0?gY-1:gY;
   const prevS=prevY+'-'+String(prevM+1).padStart(2,'0')+'-01';
   const prevE=prevY+'-'+String(prevM+1).padStart(2,'0')+'-31';
   const [rPrevG, rPrevC] = await Promise.all([
@@ -814,8 +829,8 @@ async function renderGastos(){
   let arrastreGastos=0;
   gastosPrev.forEach(function(g){if(!ultimoCortePrev||g.fecha>ultimoCortePrev)arrastreGastos+=(g.monto||0);});
 
-  const s=cY+'-'+String(cM+1).padStart(2,'0')+'-01';
-  const e=cY+'-'+String(cM+1).padStart(2,'0')+'-31';
+  const s=cY_g+'-'+String(cM_g+1).padStart(2,'0')+'-01';
+  const e=cY_g+'-'+String(cM_g+1).padStart(2,'0')+'-31';
   const [rg,rc]=await Promise.all([
     sb.from('caja_gastos').select('*').gte('fecha',s).lte('fecha',e).order('fecha'),
     sb.from('caja_gastos_cuadres').select('*').gte('fecha',s).lte('fecha',e).order('fecha')
@@ -911,7 +926,7 @@ async function hacerCorteGastos(){
   const receptor=(document.getElementById('cg-receptor').value||'').trim();
   const obs=(document.getElementById('cg-obs').value||'').trim();
   const today=new Date();
-  const fecha=cY+'-'+String(cM+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const fecha=cY_g+'-'+String(cM_g+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
   if(!confirm('Confirmar corte de gastos al dia '+fecha+'?'))return;
   syncBusy();
   const {error}=await sb.from('caja_gastos_cuadres').insert({id:Date.now(),fecha:fecha,receptor:receptor||null,observaciones:obs||null});
