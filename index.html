@@ -799,6 +799,21 @@ async function renderGastos(){
   const corteWrap=document.getElementById('corte-gastos-wrap');
   const ciclosList=document.getElementById('gastos-ciclos-list');
   ciclosList.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+
+  // Calcular arrastre del mes anterior (gastos sin cortar)
+  const prevM=cM===0?11:cM-1;
+  const prevY=cM===0?cY-1:cY;
+  const prevS=prevY+'-'+String(prevM+1).padStart(2,'0')+'-01';
+  const prevE=prevY+'-'+String(prevM+1).padStart(2,'0')+'-31';
+  const [rPrevG, rPrevC] = await Promise.all([
+    sb.from('caja_gastos').select('*').gte('fecha',prevS).lte('fecha',prevE).order('fecha'),
+    sb.from('caja_gastos_cuadres').select('*').gte('fecha',prevS).lte('fecha',prevE).order('fecha','desc').limit(1)
+  ]);
+  const gastosPrev=rPrevG.data||[];
+  const ultimoCortePrev=rPrevC.data&&rPrevC.data[0]?rPrevC.data[0].fecha:null;
+  let arrastreGastos=0;
+  gastosPrev.forEach(function(g){if(!ultimoCortePrev||g.fecha>ultimoCortePrev)arrastreGastos+=(g.monto||0);});
+
   const s=cY+'-'+String(cM+1).padStart(2,'0')+'-01';
   const e=cY+'-'+String(cM+1).padStart(2,'0')+'-31';
   const [rg,rc]=await Promise.all([
@@ -824,8 +839,15 @@ async function renderGastos(){
 
   ciclosList.innerHTML='';
 
+  // Mostrar arrastre del mes anterior si existe
+  const arrastreWrap=document.createElement('div');
+  if(arrastreGastos>0){
+    arrastreWrap.innerHTML='<div class="arrastre-banner"><div class="arrastre-lbl">&#128203; Gastos pendientes '+MESES[prevM]+' '+prevY+'</div><div class="arrastre-amt">-'+fmt(arrastreGastos)+'</div></div>';
+    ciclosList.appendChild(arrastreWrap);
+  }
+
   if(!gastos.length && !cortes.length){
-    ciclosList.innerHTML='<div class="empty-msg">Sin gastos este mes.</div>';return;
+    ciclosList.innerHTML+='<div class="empty-msg">Sin gastos este mes.</div>';return;
   }
 
   // Construir ciclos de gastos
