@@ -469,7 +469,8 @@ async function renderCaja(){
   document.getElementById('ph-name').style.color=PC[cP];
   document.getElementById('ph-sub').textContent=MESES[cM]+' '+cY;
   const s=cY+'-'+String(cM+1).padStart(2,'0')+'-01';
-  const e=cY+'-'+String(cM+1).padStart(2,'0')+'-31';
+  const lastDay=new Date(cY,cM+1,0).getDate();
+  const e=cY+'-'+String(cM+1).padStart(2,'0')+'-'+String(lastDay).padStart(2,'0');
   const punto=PUNTOS[cP];
   const [ra,rb,rc]=await Promise.all([
     sb.from('caja_registros').select('*').eq('punto',punto).gte('fecha',s).lte('fecha',e),
@@ -711,9 +712,6 @@ async function addEnt(d,t){
   const hora=document.getElementById('nef-h-'+d+'-'+turno).value;
   const receptor=(document.getElementById('nef-r-'+d+'-'+turno).value||'').trim();
 
-  // DIAGNÓSTICO: mostrar qué está leyendo antes de cualquier validación
-  alert('DIAGNÓSTICO\nDía: '+d+' Turno: '+turno+'\nValor raw: ['+rawVal+']\nMonto parseado: '+monto+'\nFecha: '+ds(d)+'\nPunto: '+PUNTOS[cP]);
-
   if(!rawVal||isNaN(monto)||monto<=0){alert('Monto inválido.');return;}
   const payload={punto:PUNTOS[cP],fecha:ds(d),turno:turno,hora:hora,monto:monto,receptor:receptor||null};
   syncBusy();
@@ -723,7 +721,6 @@ async function addEnt(d,t){
     alert('ERROR SUPABASE\n'+resp.error.message+'\nCódigo: '+(resp.error.code||'?')+'\nDetalle: '+(resp.error.details||'?'));
     return;
   }
-  alert('ÉXITO - entrega guardada correctamente');
   document.getElementById('nef-m-'+d+'-'+turno).value='';
   syncOk();renderCaja();
 }
@@ -831,7 +828,8 @@ async function renderGastos(){
   const prevM=cM_g===0?11:cM_g-1;
   const prevY=cM_g===0?gY-1:gY;
   const prevS=prevY+'-'+String(prevM+1).padStart(2,'0')+'-01';
-  const prevE=prevY+'-'+String(prevM+1).padStart(2,'0')+'-31';
+  const lastDayPrev=new Date(prevY,prevM+1,0).getDate();
+  const prevE=prevY+'-'+String(prevM+1).padStart(2,'0')+'-'+String(lastDayPrev).padStart(2,'0');
   const [rPrevG, rPrevC] = await Promise.all([
     sb.from('caja_gastos').select('*').gte('fecha',prevS).lte('fecha',prevE).order('fecha'),
     sb.from('caja_gastos_cuadres').select('*').gte('fecha',prevS).lte('fecha',prevE).order('fecha','desc').limit(1)
@@ -842,7 +840,8 @@ async function renderGastos(){
   gastosPrev.forEach(function(g){if(!ultimoCortePrev||g.fecha>ultimoCortePrev)arrastreGastos+=(g.monto||0);});
 
   const s=cY_g+'-'+String(cM_g+1).padStart(2,'0')+'-01';
-  const e=cY_g+'-'+String(cM_g+1).padStart(2,'0')+'-31';
+  const lastDay_g=new Date(cY_g,cM_g+1,0).getDate();
+  const e=cY_g+'-'+String(cM_g+1).padStart(2,'0')+'-'+String(lastDay_g).padStart(2,'0');
   const [rg,rc]=await Promise.all([
     sb.from('caja_gastos').select('*').gte('fecha',s).lte('fecha',e).order('fecha'),
     sb.from('caja_gastos_cuadres').select('*').gte('fecha',s).lte('fecha',e).order('fecha')
@@ -1003,7 +1002,8 @@ async function renderUsuarios(){
 async function renderResumen(){
   document.getElementById('stat-grid').innerHTML='<div class="loader"><div class="spinner"></div></div>';
   const s=cY+'-'+String(cM+1).padStart(2,'0')+'-01';
-  const e=cY+'-'+String(cM+1).padStart(2,'0')+'-31';
+  const lastDay_r=new Date(cY,cM+1,0).getDate();
+  const e=cY+'-'+String(cM+1).padStart(2,'0')+'-'+String(lastDay_r).padStart(2,'0');
   const [ra,rb,rc]=await Promise.all([
     sb.from('caja_entregas').select('punto,monto,receptor,fecha').gte('fecha',s).lte('fecha',e),
     sb.from('caja_gastos').select('monto,fecha').gte('fecha',s).lte('fecha',e),
@@ -1094,7 +1094,8 @@ function jumpTo(ym){const p=ym.split('-');cY=parseInt(p[0]);cM=parseInt(p[1])-1;
 
 async function exportTXT(){
   const s=cY+'-'+String(cM+1).padStart(2,'0')+'-01';
-  const e=cY+'-'+String(cM+1).padStart(2,'0')+'-31';
+  const lastDay_r=new Date(cY,cM+1,0).getDate();
+  const e=cY+'-'+String(cM+1).padStart(2,'0')+'-'+String(lastDay_r).padStart(2,'0');
   const [ra,rb]=await Promise.all([
     sb.from('caja_entregas').select('*').gte('fecha',s).lte('fecha',e).order('fecha'),
     sb.from('caja_gastos').select('*').gte('fecha',s).lte('fecha',e).order('fecha')
