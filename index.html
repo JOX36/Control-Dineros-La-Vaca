@@ -843,6 +843,8 @@ async function renderGastos(){
     corteWrap.innerHTML=
       '<div class="corte-form" id="corte-g-form">'+
       '<div style="font-size:.74rem;color:#a01a1a;font-weight:900;">&#x2702;&#xFE0F; Registrar Corte de Gastos</div>'+
+      '<label style="font-size:.7rem;color:#a01a1a;font-weight:700;">Fecha del corte</label>'+
+      '<input class="nef-inp" type="date" id="cg-fecha">'+
       '<input class="nef-inp" type="text" placeholder="Recibido / responsable (opcional)" id="cg-receptor">'+
       '<input class="nef-inp" type="text" placeholder="Observaciones (opcional)" id="cg-obs">'+
       '<button class="btn-hacer-cuadre" style="background:var(--red)" onclick="hacerCorteGastos()">&#x2705; Confirmar Corte</button>'+
@@ -920,19 +922,28 @@ async function renderGastos(){
 
 function togCorteForm(){
   var f=document.getElementById('corte-g-form');
-  if(f)f.classList.toggle('open');
+  if(f){
+    f.classList.toggle('open');
+    // Precargar fecha de hoy si el campo está vacío
+    var fi=document.getElementById('cg-fecha');
+    if(fi&&!fi.value){
+      var hoy=new Date();
+      fi.value=cY_g+'-'+String(cM_g+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+    }
+  }
 }
 async function hacerCorteGastos(){
+  const fechaInput=(document.getElementById('cg-fecha').value||'').trim();
   const receptor=(document.getElementById('cg-receptor').value||'').trim();
   const obs=(document.getElementById('cg-obs').value||'').trim();
-  const today=new Date();
-  const fecha=cY_g+'-'+String(cM_g+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-  if(!confirm('Confirmar corte de gastos al dia '+fecha+'?'))return;
+  if(!fechaInput){alert('Selecciona la fecha del corte.');return;}
+  if(!confirm('Confirmar corte de gastos al dia '+fechaInput+'?'))return;
   syncBusy();
-  const {error}=await sb.from('caja_gastos_cuadres').insert({id:Date.now(),fecha:fecha,receptor:receptor||null,observaciones:obs||null});
+  const {error}=await sb.from('caja_gastos_cuadres').insert({id:Date.now(),fecha:fechaInput,receptor:receptor||null,observaciones:obs||null});
   if(error){syncErr();alert('Error: '+error.message);return;}
   syncOk();
   document.getElementById('corte-g-form').classList.remove('open');
+  document.getElementById('cg-fecha').value='';
   document.getElementById('cg-receptor').value='';
   document.getElementById('cg-obs').value='';
   renderGastos();
