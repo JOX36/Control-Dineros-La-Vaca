@@ -710,13 +710,20 @@ async function addEnt(d,t){
   const monto=parseFloat(String(rawVal).replace(',','.'));
   const hora=document.getElementById('nef-h-'+d+'-'+turno).value;
   const receptor=(document.getElementById('nef-r-'+d+'-'+turno).value||'').trim();
-  if(!rawVal||isNaN(monto)||monto<=0){alert('Ingresa un monto valido (usa punto, no coma).');return;}
+
+  // DIAGNÓSTICO: mostrar qué está leyendo antes de cualquier validación
+  alert('DIAGNÓSTICO\nDía: '+d+' Turno: '+turno+'\nValor raw: ['+rawVal+']\nMonto parseado: '+monto+'\nFecha: '+ds(d)+'\nPunto: '+PUNTOS[cP]);
+
+  if(!rawVal||isNaN(monto)||monto<=0){alert('Monto inválido.');return;}
   const payload={punto:PUNTOS[cP],fecha:ds(d),turno:turno,hora:hora,monto:monto,receptor:receptor||null};
-  console.log('Insertando entrega:',JSON.stringify(payload));
   syncBusy();
   const resp=await sb.from('caja_entregas').insert(payload);
-  console.log('Respuesta Supabase:',JSON.stringify(resp));
-  if(resp.error){syncErr();alert('Error al guardar:\n'+resp.error.message+'\nCódigo: '+resp.error.code);return;}
+  if(resp.error){
+    syncErr();
+    alert('ERROR SUPABASE\n'+resp.error.message+'\nCódigo: '+(resp.error.code||'?')+'\nDetalle: '+(resp.error.details||'?'));
+    return;
+  }
+  alert('ÉXITO - entrega guardada correctamente');
   document.getElementById('nef-m-'+d+'-'+turno).value='';
   syncOk();renderCaja();
 }
