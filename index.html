@@ -706,13 +706,18 @@ function togCF(d){document.getElementById('cf-'+d).classList.toggle('open');}
 
 async function addEnt(d,t){
   const turno=t===0?'am':'pm';
-  const monto=parseFloat(document.getElementById('nef-m-'+d+'-'+turno).value);
+  const rawVal=document.getElementById('nef-m-'+d+'-'+turno).value;
+  const monto=parseFloat(String(rawVal).replace(',','.'));
   const hora=document.getElementById('nef-h-'+d+'-'+turno).value;
   const receptor=(document.getElementById('nef-r-'+d+'-'+turno).value||'').trim();
-  if(!monto||monto<=0){alert('Ingresa un monto valido.');return;}
+  if(!rawVal||isNaN(monto)||monto<=0){alert('Ingresa un monto valido (usa punto, no coma).');return;}
+  const payload={punto:PUNTOS[cP],fecha:ds(d),turno:turno,hora:hora,monto:monto,receptor:receptor||null};
+  console.log('Insertando entrega:',JSON.stringify(payload));
   syncBusy();
-  const {error}=await sb.from('caja_entregas').insert({punto:PUNTOS[cP],fecha:ds(d),turno:turno,hora:hora,monto:monto,receptor:receptor});
-  if(error){syncErr();alert('Error: '+error.message);return;}
+  const resp=await sb.from('caja_entregas').insert(payload);
+  console.log('Respuesta Supabase:',JSON.stringify(resp));
+  if(resp.error){syncErr();alert('Error al guardar:\n'+resp.error.message+'\nCódigo: '+resp.error.code);return;}
+  document.getElementById('nef-m-'+d+'-'+turno).value='';
   syncOk();renderCaja();
 }
 async function delEnt(id,d,t){
