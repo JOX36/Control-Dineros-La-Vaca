@@ -428,7 +428,7 @@ function syncBusy(){document.getElementById('sync-dot').className='sync-dot sync
 function syncErr(){document.getElementById('sync-dot').className='sync-dot err';}
 
 function changeMonth(d){cM+=d;if(cM>11){cM=0;cY++;}if(cM<0){cM=11;cY--;}updateML();renderCaja();}
-function goToday(){cY=HOY.getFullYear();cM=HOY.getMonth();updateML();renderCaja();}
+function goToday(){const _n=new Date();cY=_n.getFullYear();cM=_n.getMonth();updateML();renderCaja();}
 function updateML(){document.getElementById('monthLabel').textContent=MESES[cM].slice(0,3)+' '+cY;}
 function ds(d){return cY+'-'+String(cM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
 function getDays(){return new Date(cY,cM+1,0).getDate();}
@@ -519,7 +519,7 @@ async function renderCaja(){
     const amTot=ents.am.reduce(function(s,en){return s+(en.monto||0);},0);
     const pmTot=ents.pm.reduce(function(s,en){return s+(en.monto||0);},0);
     const nEnts=allEnts.length;
-    const isToday=d===HOY.getDate()&&cM===HOY.getMonth()&&cY===HOY.getFullYear();
+    const _hoy=new Date();const isToday=d===_hoy.getDate()&&cM===_hoy.getMonth()&&cY===_hoy.getFullYear();
     const cuadre=cuadreMap[fecha];
 
     // Receptores únicos del día
@@ -1111,9 +1111,9 @@ function initApp(){
   else document.getElementById('ro-banner').classList.remove('show');
   if(isAdmin())document.getElementById('bnav-usuarios').style.display='flex';
   document.getElementById('bottom-nav').style.display='flex';
-  cY=HOY.getFullYear();cM=HOY.getMonth();
+  const _now=new Date();cY=_now.getFullYear();cM=_now.getMonth();
   updateML();renderCaja();
-  const td=HOY.getFullYear()+'-'+String(HOY.getMonth()+1).padStart(2,'0')+'-'+String(HOY.getDate()).padStart(2,'0');
+  const _td=new Date();const td=_td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');
   const gf=document.getElementById('g-fecha');if(gf)gf.value=td;
 }
 
